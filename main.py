@@ -256,6 +256,17 @@ async def removechannel(ctx, cname : str):
 
     await ctx.channel.send("An unknown error has occurred.")
 
+@client.command()
+@commands.check(is_admin)
+async def checkchannel(ctx):
+    if ctx.guild == None:
+        return
+    
+    if int(ctx.channel.id) in config.validChannels:
+        await ctx.channel.send("This channel is whitelisted.")
+    else:
+        await ctx.channel.send("This channel is not whitelisted.")
+
 @client.event
 async def on_message(message):
     await client.wait_until_ready()
