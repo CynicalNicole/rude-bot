@@ -9,7 +9,7 @@ import random
 
 #Set up logging
 logger = logging.getLogger('discord')
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -167,7 +167,7 @@ async def on_ready():
 @client.command()
 @commands.check(is_owner)
 async def shutdown(ctx):
-    client.close()
+    await client.close()
     exit()
 
 @client.command()
@@ -223,11 +223,10 @@ async def listmessages(ctx):
 
 @client.command()
 @commands.check(is_admin)
-async def addchannel(ctx, cname : str):
+async def addchannel(ctx, channel : discord.TextChannel):
     if ctx.guild == None:
         return
 
-    channel = discord.utils.get(ctx.guild.channels, name=cname)
     if channel == None:
         return
 
@@ -236,11 +235,10 @@ async def addchannel(ctx, cname : str):
 
 @client.command()
 @commands.check(is_admin)
-async def removechannel(ctx, cname : str):
+async def removechannel(ctx, channel : discord.TextChannel):
     if ctx.guild == None:
         return
 
-    channel = discord.utils.get(ctx.guild.channels, name=cname)
     if channel == None:
         return
 
@@ -258,14 +256,24 @@ async def removechannel(ctx, cname : str):
 
 @client.command()
 @commands.check(is_admin)
-async def checkchannel(ctx):
+async def checkchannel(ctx, channel : discord.TextChannel):
     if ctx.guild == None:
+        return
+
+    if channel == None:
         return
     
     if int(ctx.channel.id) in config.validChannels:
         await ctx.channel.send("This channel is whitelisted.")
     else:
         await ctx.channel.send("This channel is not whitelisted.")
+
+@addchannel.error
+@removechannel.error
+@checkchannel.error
+async def channel_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        await ctx.channel.send('Invalid channel.')
 
 @client.event
 async def on_message(message):
