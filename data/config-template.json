@@ -1,0 +1,16 @@
+{
+    "bot-owner": 0,
+    "admins": [
+        0
+    ],
+    "whitelisted-channels": [
+        0
+    ],
+    "chat-messages": [
+        "Fuck you, {usr}",
+        "Fuck off, {usr}",
+        "Hey, {usr}, fuck you."
+    ],
+    "bot-token": "",
+    "max-roll": 1000
+}
