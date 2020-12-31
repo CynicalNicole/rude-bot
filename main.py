@@ -3,7 +3,7 @@ from discord.ext import commands
 import logging
 import asyncio
 import json
-import sqlite3
+from database import db_connection
 import os
 import random
 
@@ -13,6 +13,8 @@ logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+guildList = dict()
 
 #Load config from config.json
 class config:
@@ -25,8 +27,10 @@ class config:
         self.admins = self.configDict['admins']
         self.validChannels = self.configDict['whitelisted-channels']   
         self.botToken = self.configDict['bot-token']
-        self.maxRoll = self.configDict['max-roll']
+        self.maxRoll = self.configDict['default-max-roll']
         self.chatMessages = self.configDict['chat-messages']
+        self.guildRolls = self.configDict['guild-rolls']
+        self.databasePath = self.configDict['database']
         #I can count
 
     #Load dict from file
@@ -43,8 +47,10 @@ class config:
         self.admins = self.configDict['admins']   
         self.validChannels = self.configDict['whitelisted-channels']
         self.botToken = self.configDict['bot-token']
-        self.maxRoll = self.configDict['max-roll']
+        self.maxRoll = self.configDict['default-max-roll']
         self.chatMessages = self.configDict['chat-messages']
+        self.guildRolls = self.configDict['guild-rolls']
+        self.databasePath = self.configDict['database']
 
     #Method for reloading the config
     def reloadConfig(self):
@@ -122,10 +128,12 @@ class config:
                 return 1
 
         return -1
-                
 
 #Create config
 config = config()
+
+#Connect to the database
+db_connection = db_connection(config.databasePath) 
 
 #Create the bot client
 client = commands.Bot(command_prefix='~')
@@ -286,10 +294,19 @@ async def on_message(message):
     if channel.type == discord.ChannelType.private:
         return
 
+    #LoadGuildIntoMemory
+    if int(channel.guild.id) not in guildList:
+        guildInfo = db_connection.getGuildInfo(channel.guild.id)
+        if guildInfo == None:
+            #TODO: Need to implement creation of guild data.
+            pass
+        else:
+            guildList[channel.guild.id] = guildInfo
+
     if message.content.startswith("~"):
         await client.process_commands(message)
     else:
-        if int(channel.id) not in config.validChannels:
+        if int(channel.id) not in guildList[channel.guild.id].Channels:
             return
 
         rngRoll = random.randint(1, config.maxRoll)
